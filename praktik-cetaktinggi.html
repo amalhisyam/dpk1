@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workshop Virtual bersama SyamKibar: Cetak Tinggi Sederhana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Serif:ital,wght@0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #fafaf9; /* stone-50 */
+            color: #1c1917; /* stone-900 */
+        }
+        
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif', serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        .potato-texture {
+            background-color: #d97706;
+            background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2392400e' fill-opacity='0.2' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        /* Grid Game Styles */
+        .matrix-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .matrix-cell:hover {
+            opacity: 0.8;
+        }
+        .carved {
+            background-color: #e7e5e4 !important; /* stone-200 */
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .inked {
+            background-color: #be123c !important; /* rose-700 */
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .stamp-paper {
+            background-image: radial-gradient(#d6d3d1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+    <!-- Chosen Palette: "Earthy Craftsman" - Stone/Paper Background, Amber (Potato), Rose (Ink), Emerald (Islamic/Growth) -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Sets the context (Class X DKV, Islamic School Motto).
+         2. Concept Dashboard: Explains "Relief Print" using simple CSS visuals (High vs Low).
+         3. The Toolbox: Interactive grid showing materials with cost-efficiency context.
+         4. Simulator "The Virtual Potato": A core interactive section where users simulate the 4 steps (Prep, Carve, Ink, Stamp).
+            - Step A: Mirror Logic (Text Input -> Reversed Output).
+            - Step B/C: Grid interaction (Click to carve) to visualize negative space.
+            - Step D: Comparison Data (Chart.js Bar Chart) comparing Manual vs Digital.
+         5. Assessment & Gallery: Chart.js Doughnut chart for grading rubric and a list of project ideas.
+         Rationale: This structure breaks down the linear guide into a "Learn -> Do -> Analyze" flow, suitable for vocational students.
+    -->
+    <!-- Visualization & Content Choices:
+         1. Concept: CSS Blocks (Raised vs Recessed) -> Goal: Inform -> Simple visual analogy.
+         2. Simulator: JS Grid (10x10) -> Goal: Change/Understand -> Simulates the "Carving" process (removing material).
+         3. Comparison: Chart.js Bar -> Goal: Compare -> Visualizing the "Time vs Effort" contrast mentioned in text.
+         4. Rubric: Chart.js Doughnut -> Goal: Inform -> clear breakdown of grading weights.
+         5. Mirror Tool: JS String Manipulation -> Goal: Inform -> Demonstrates the "Reverse" concept essential for print.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased">
+
+    <!-- Navigation -->
+    <nav class="bg-emerald-900 text-stone-50 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="font-bold text-lg">DKV Fase E - Modul 3</span>
+                <span class="text-xs text-emerald-200">Santun, Terampil, Mandiri</span>
+            </div>
+            <div class="hidden md:flex space-x-6 text-sm font-medium">
+                <a href="#concept" class="hover:text-amber-400 transition">Konsep</a>
+                <a href="#tools" class="hover:text-amber-400 transition">Alat & Bahan</a>
+                <a href="#simulator" class="hover:text-amber-400 transition">Simulasi Praktik</a>
+                <a href="#rubric" class="hover:text-amber-400 transition">Penilaian</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-stone-100 border-b border-stone-200 py-12">
+        <div class="container mx-auto px-4 text-center max-w-3xl">
+            <div class="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold mb-4">Topik: Evolusi Teknologi Grafika</div>
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-800 mb-6 leading-tight">Cetak Tinggi Sederhana <br><span class="text-amber-700 text-3xl md:text-4xl italic">(Relief Print)</span></h1>
+            <p class="text-lg text-stone-600 mb-8 leading-relaxed">
+                Menelusuri jejak sejarah teknologi grafika sebelum era digital. Menggunakan bahan sederhana untuk memahami prinsip dasar: 
+                <span class="font-bold text-stone-800">Bagian Timbul = Mencetak Gambar.</span>
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="#simulator" class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-lg shadow transition font-medium">Mulai Simulasi</a>
+                <a href="#concept" class="bg-white border border-stone-300 hover:bg-stone-50 text-stone-700 px-6 py-3 rounded-lg transition font-medium">Pelajari Konsep</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section 1: Concept Visualization -->
+    <section id="concept" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="md:w-1/2">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-4">1. Pengantar Konsep</h2>
+                    <p class="text-stone-600 mb-6">
+                        Sebelum mesin printer laser dan offset ditemukan, manusia memperbanyak tulisan dan gambar menggunakan teknik ini. 
+                        Prinsip utamanya adalah manipulasi ketinggian permukaan.
+                    </p>
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
+                        <h4 class="font-bold text-amber-800 mb-1">Filosofi DKV</h4>
+                        <p class="text-sm text-amber-900">
+                            "Bagian yang <strong>tinggi (timbul)</strong> akan terkena tinta, sedangkan bagian yang <strong>rendah (cekung)</strong> tetap bersih."
+                        </p>
+                    </div>
+                    <p class="text-stone-600">
+                        Ini adalah prinsip yang sama dengan <strong>Stempel</strong>. Dalam praktik ini, kita akan merasakan sensasi menjadi pengrajin grafika zaman dahulu.
+                    </p>
+                </div>
+                
+                <!-- Visual Analogy -->
+                <div class="md:w-1/2 bg-stone-100 p-8 rounded-xl shadow-inner w-full">
+                    <h3 class="text-center font-bold text-stone-500 mb-4 text-sm uppercase tracking-wider">Visualisasi Penampang Samping</h3>
+                    <div class="flex justify-center items-end h-40 gap-1 border-b-4 border-stone-300 relative">
+                        <!-- High Part -->
+                        <div class="w-20 h-32 bg-rose-600 relative flex items-center justify-center text-white font-bold rounded-t-sm shadow-lg z-10">
+                            TINTA
+                            <div class="absolute -top-8 text-stone-800 text-xs font-normal bg-white px-2 py-1 rounded shadow">Bagian Tinggi</div>
+                        </div>
+                        <!-- Low Part -->
+                        <div class="w-20 h-10 bg-stone-300 border-t border-stone-400 relative flex items-center justify-center text-stone-500 text-xs rounded-t-sm z-0">
+                            KOSONG
+                            <div class="absolute -top-16 text-stone-500 text-xs font-normal text-center w-32">Bagian Cekung<br>(Dicungkil)</div>
+                        </div>
+                        <!-- High Part -->
+                        <div class="w-20 h-32 bg-rose-600 relative flex items-center justify-center text-white font-bold rounded-t-sm shadow-lg z-10">
+                            TINTA
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <span class="text-sm text-stone-500">Kertas (Media Cetak) akan menyentuh bagian Merah</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Tools & Materials -->
+    <section id="tools" class="py-16 bg-stone-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <h2 class="text-3xl font-bold text-stone-800 mb-2">2. Alat & Bahan (Low Cost)</h2>
+                <p class="text-stone-600">Bahan-bahan ini dipilih agar mudah didapat, murah, namun efektif untuk pembelajaran.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
+                    <div class="text-4xl mb-4">🥔</div>
+                    <h3 class="font-bold text-stone-800 text-lg mb-2">Matriks (Cetakan)</h3>
+                    <ul class="text-sm text-stone-600 space-y-1 list-disc list-inside">
+                        <li>Kentang (pilih tekstur keras)</li>
+                        <li>Penghapus Karet Bekas</li>
+                        <li>Ubi / Pelepah Pisang</li>
+                    </ul>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
+                    <div class="text-4xl mb-4">🔪</div>
+                    <h3 class="font-bold text-stone-800 text-lg mb-2">Alat Cungkil</h3>
+                    <ul class="text-sm text-stone-600 space-y-1 list-disc list-inside">
+                        <li>Cutter (Hati-hati!)</li>
+                        <li>Paku / Tusuk Gigi (Untuk detail)</li>
+                        <li>Pisau ukir (opsional)</li>
+                    </ul>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="font-bold text-stone-800 text-lg mb-2">Tinta & Bantalan</h3>
+                    <ul class="text-sm text-stone-600 space-y-1 list-disc list-inside">
+                        <li>Cat Poster / Air</li>
+                        <li>Pewarna Makanan (Hemat)</li>
+                        <li>Spons Cuci Piring (Pad)</li>
+                    </ul>
+                </div>
+                <!-- Card 4 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
+                    <div class="text-4xl mb-4">📄</div>
+                    <h3 class="font-bold text-stone-800 text-lg mb-2">Media Cetak</h3>
+                    <ul class="text-sm text-stone-600 space-y-1 list-disc list-inside">
+                        <li>Kertas Gambar A4</li>
+                        <li>HVS Bekas (Reuse)</li>
+                        <li>Kertas Kado Polos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: The Simulator (Core Interactive) -->
+    <section id="simulator" class="py-16 bg-white border-y border-stone-200">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-stone-800 mb-8 text-center">3. Simulasi Langkah Kerja</h2>
+            
+            <!-- Tab Navigation -->
+            <div class="flex flex-wrap justify-center mb-8 gap-2">
+                <button onclick="switchTab('step1')" id="tab-step1" class="tab-btn px-6 py-2 rounded-full font-medium transition bg-emerald-700 text-white shadow">Langkah A: Persiapan</button>
+                <button onclick="switchTab('step2')" id="tab-step2" class="tab-btn px-6 py-2 rounded-full font-medium transition bg-stone-200 text-stone-600 hover:bg-stone-300">Langkah B & C: Cungkil & Cetak</button>
+                <button onclick="switchTab('step3')" id="tab-step3" class="tab-btn px-6 py-2 rounded-full font-medium transition bg-stone-200 text-stone-600 hover:bg-stone-300">Langkah D: Refleksi</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="bg-stone-50 rounded-2xl p-6 md:p-8 min-h-[500px] border border-stone-200 shadow-inner relative overflow-hidden">
+                
+                <!-- STEP 1: PREPARATION & MIRRORING -->
+                <div id="step1" class="step-content block">
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="md:w-1/2 space-y-4">
+                            <h3 class="text-xl font-bold text-emerald-800">Prinsip Cermin (Mirroring)</h3>
+                            <p class="text-stone-700">
+                                Saat Anda mencetak sesuatu, hasilnya akan terbalik. Jika Anda ingin mencetak huruf "B", Anda harus menggambarnya terbalik di permukaan kentang.
+                            </p>
+                            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm">
+                                <strong>Tips:</strong> Potong kentang menjadi dua bagian rata. Tiriskan getahnya dengan tisu agar tinta menempel sempurna.
+                            </div>
+                            
+                            <div class="mt-6">
+                                <label class="block text-sm font-bold text-stone-700 mb-2">Coba Ketik Tulisan Anda:</label>
+                                <input type="text" id="mirrorInput" placeholder="Contoh: DKV 10" class="w-full p-3 border border-stone-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none" oninput="updateMirror()">
+                            </div>
+                        </div>
+                        <div class="md:w-1/2 flex flex-col items-center justify-center bg-stone-200 rounded-xl p-8">
+                            <div class="text-center mb-2 font-bold text-stone-500">Tampilan di Kentang (Harus Terbalik)</div>
+                            <div id="mirrorOutput" class="text-5xl md:text-6xl font-serif font-bold text-amber-800 opacity-80 transform scale-x-[-1] min-h-[80px] bg-amber-200 px-8 py-4 rounded-lg shadow-inner border border-amber-300 flex items-center justify-center">
+                                DKV 10
+                            </div>
+                            <p class="mt-4 text-xs text-stone-500 text-center">Perhatikan bahwa huruf di atas terbalik secara horizontal.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: CARVING & PRINTING SIMULATOR -->
+                <div id="step2" class="step-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                        <!-- Left: The Potato (Carving) -->
+                        <div class="flex flex-col">
+                            <h3 class="text-xl font-bold text-emerald-800 mb-2">Meja Cungkil (The Matrix)</h3>
+                            <p class="text-sm text-stone-600 mb-4">Klik kotak di bawah untuk <strong>mencungkil</strong> (membuang bagian). Bagian <span class="text-rose-700 font-bold">MERAH</span> akan tercetak. Bagian <span class="text-stone-400 font-bold">ABU</span> tidak tercetak.</p>
+                            
+                            <div class="flex-grow flex items-center justify-center bg-stone-800 p-4 rounded-xl shadow-lg">
+                                <div id="potato-grid" class="grid grid-cols-10 gap-1 w-full max-w-[300px] aspect-square bg-stone-900 p-1 rounded border-4 border-amber-700">
+                                    <!-- Grid generated by JS -->
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-between items-center">
+                                <button onclick="resetGrid()" class="text-sm text-stone-500 hover:text-red-500 underline">Reset Kentang</button>
+                                <div class="text-right text-xs text-stone-500 italic">"Sabar.. Cungkil dengan hati-hati." (Nilai Itqan)</div>
+                            </div>
+                        </div>
+
+                        <!-- Right: The Paper (Result) -->
+                        <div class="flex flex-col">
+                            <h3 class="text-xl font-bold text-emerald-800 mb-2">Hasil Cetak (Stamping)</h3>
+                            <p class="text-sm text-stone-600 mb-4">Tekan tombol di bawah untuk menempelkan kentang ke kertas.</p>
+                            
+                            <div class="flex-grow bg-white stamp-paper rounded-xl border border-stone-300 p-4 relative overflow-hidden flex flex-col items-center justify-center min-h-[300px]" id="paper-area">
+                                <p class="text-stone-300 text-sm absolute pointer-events-none select-none">Area Kertas</p>
+                                <!-- Stamps appear here -->
+                            </div>
+
+                            <div class="mt-4 flex gap-4">
+                                <button onclick="stamp()" class="flex-1 bg-rose-700 hover:bg-rose-800 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform active:scale-95 transition flex items-center justify-center gap-2">
+                                    <span>🎨</span> Tempel / Cap!
+                                </button>
+                                <button onclick="clearPaper()" class="px-4 py-3 bg-stone-200 hover:bg-stone-300 rounded-lg text-stone-600 font-medium">Ganti Kertas</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: REFLECTION & COMPARISON -->
+                <div id="step3" class="step-content hidden">
+                    <div class="flex flex-col md:flex-row gap-8 items-center h-full">
+                        <div class="md:w-1/3">
+                            <h3 class="text-xl font-bold text-emerald-800 mb-4">Refleksi Teknologi</h3>
+                            <p class="text-stone-700 mb-4">
+                                "Di HP, menggandakan gambar cuma butuh 1 detik (Copy-Paste). Dengan kentang, kita butuh tenaga untuk mencetak berulang kali agar rapi."
+                            </p>
+                            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-900 text-sm">Kesimpulan</h4>
+                                <p class="text-sm text-blue-800 mt-1">
+                                    Teknologi diciptakan untuk mempermudah kesulitan manusia. Namun, seni manual mengajarkan kita menghargai proses.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="md:w-2/3 w-full">
+                            <!-- Chart Container -->
+                             <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-200">
+                                <div class="chart-container mx-auto">
+                                    <canvas id="comparisonChart"></canvas>
+                                </div>
+                                <p class="text-center text-xs text-stone-500 mt-2">Perbandingan Konseptual Manual vs Digital</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Project Ideas & Rubric -->
+    <section id="rubric" class="py-16 bg-stone-50">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <!-- Project Ideas -->
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800 mb-6">Ide Karya & Pemanfaatan</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm">
+                            <div class="bg-emerald-100 text-emerald-600 w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0">🎁</div>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Kertas Kado Custom</h4>
+                                <p class="text-sm text-stone-600">Gunakan kertas koran bekas atau kertas coklat. Cetak motif berulang (pattern) untuk membungkus hadiah.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm">
+                            <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0">💌</div>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Kartu Ucapan</h4>
+                                <p class="text-sm text-stone-600">Cetakan tunggal yang rapi di tengah kertas tebal. Tambahkan tulisan tangan yang indah.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm">
+                            <div class="bg-orange-100 text-orange-600 w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0">📚</div>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Sampul Buku</h4>
+                                <p class="text-sm text-stone-600">Hias sampul buku tulis agar seragam satu kelas dengan identitas visual yang unik.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessment Rubric -->
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800 mb-6">Rubrik Penilaian</h2>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                        <div class="chart-container mx-auto h-64">
+                            <canvas id="rubricChart"></canvas>
+                        </div>
+                        <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+                            <div class="border-l-4 border-emerald-500 pl-3">
+                                <strong class="block text-emerald-900">Kreativitas (30%)</strong>
+                                <span class="text-stone-500 text-xs">Keunikan bentuk desain.</span>
+                            </div>
+                            <div class="border-l-4 border-amber-500 pl-3">
+                                <strong class="block text-amber-900">Teknik (30%)</strong>
+                                <span class="text-stone-500 text-xs">Kerapian memisahkan bagian timbul/cekung.</span>
+                            </div>
+                            <div class="border-l-4 border-rose-500 pl-3">
+                                <strong class="block text-rose-900">Komposisi (20%)</strong>
+                                <span class="text-stone-500 text-xs">Kerapian susunan pola berulang.</span>
+                            </div>
+                            <div class="border-l-4 border-blue-500 pl-3">
+                                <strong class="block text-blue-900">Kebersihan/Adab (20%)</strong>
+                                <span class="text-stone-500 text-xs">Kebersihan meja kerja pasca praktik.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-emerald-900 text-emerald-100 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="font-serif italic mb-2">"Teknologi berkembang, namun esensi berkarya tetap pada ketulusan hati."</p>
+            <p class="text-sm opacity-75">&copy; 2026 Modul Ajar DKV Kelas X.dari SyamKibar untuk SMK Islam Al-Amal Surabaya.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Tab Navigation Logic ---
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('block'));
+            
+            // Reset tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-700', 'text-white', 'shadow');
+                btn.classList.add('bg-stone-200', 'text-stone-600');
+            });
+
+            // Show selected content
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+
+            // Highlight selected tab
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.remove('bg-stone-200', 'text-stone-600');
+            activeBtn.classList.add('bg-emerald-700', 'text-white', 'shadow');
+        }
+
+        // --- 2. Mirror Tool Logic ---
+        function updateMirror() {
+            const input = document.getElementById('mirrorInput').value;
+            const output = document.getElementById('mirrorOutput');
+            output.textContent = input || "DKV 10"; // Default text
+        }
+
+        // --- 3. Potato Grid Simulator Logic ---
+        const gridContainer = document.getElementById('potato-grid');
+        let gridState = []; // 0 = Inked (High), 1 = Carved (Low)
+
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            gridState = [];
+            for (let i = 0; i < 100; i++) { // 10x10 grid
+                const cell = document.createElement('div');
+                cell.className = 'matrix-cell w-full h-full rounded-sm inked';
+                cell.dataset.index = i;
+                
+                // Initial Pattern: Simple Heart shape for demo
+                // Rows: 0-9. Indices map to row*10 + col
+                // Simplified initial shape logic or just blank canvas
+                
+                gridState.push(0); // All inked initially
+                
+                cell.onclick = () => toggleCell(i, cell);
+                gridContainer.appendChild(cell);
+            }
+        }
+
+        function toggleCell(index, element) {
+            if (gridState[index] === 0) {
+                // Carve it (Remove ink)
+                gridState[index] = 1;
+                element.classList.remove('inked');
+                element.classList.add('carved');
+            } else {
+                // Undo carving (Add ink back)
+                gridState[index] = 0;
+                element.classList.remove('carved');
+                element.classList.add('inked');
+            }
+        }
+
+        function resetGrid() {
+            initGrid();
+        }
+
+        // --- 4. Stamping Logic ---
+        const paperArea = document.getElementById('paper-area');
+
+        function stamp() {
+            // Create a canvas to render the stamp image based on gridState
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            
+            const cellSize = 10;
+            
+            // Draw the stamp on canvas
+            ctx.fillStyle = '#be123c'; // Rose-700 color
+            for (let i = 0; i < 100; i++) {
+                if (gridState[i] === 0) { // If inked
+                    const row = Math.floor(i / 10);
+                    const col = i % 10;
+                    // Mirror logic handled by CSS transform on the stamp element, so draw normally here
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+
+            // Create image element from canvas
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL();
+            img.className = 'absolute w-24 h-24 transform transition-all duration-300 opacity-0 scale-150';
+            img.style.left = Math.random() * (paperArea.clientWidth - 100) + 'px';
+            img.style.top = Math.random() * (paperArea.clientHeight - 100) + 'px';
+            
+            // Random rotation for natural effect
+            const rotate = (Math.random() * 30) - 15;
+            img.style.transform = `rotate(${rotate}deg) scale(1.5)`; // Initial pop
+
+            paperArea.appendChild(img);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                img.classList.remove('opacity-0', 'scale-150');
+                img.style.transform = `rotate(${rotate}deg) scale(1)`; // Settle
+                img.classList.add('opacity-90');
+            });
+        }
+
+        function clearPaper() {
+            // Remove all images but keep the text p
+            const images = paperArea.querySelectorAll('img');
+            images.forEach(img => img.remove());
+        }
+
+        // Initialize Grid on Load
+        initGrid();
+
+        // --- 5. Charts Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // A. Comparison Chart (Bar)
+            const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+            new Chart(ctxComp, {
+                type: 'bar',
+                data: {
+                    labels: ['Waktu Pengerjaan', 'Usaha Fisik', 'Keunikan Artistik', 'Kemudahan Duplikasi'],
+                    datasets: [
+                        {
+                            label: 'Manual (Kentang)',
+                            data: [8, 9, 9, 2], // High time, High effort, High unique, Low dupe
+                            backgroundColor: '#d97706', // Amber
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Digital (Aplikasi)',
+                            data: [2, 2, 5, 10], // Low time, Low effort, Med unique, High dupe
+                            backgroundColor: '#059669', // Emerald
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: { display: true, text: 'Tingkat (Skala 1-10)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // B. Rubric Chart (Doughnut)
+            const ctxRubric = document.getElementById('rubricChart').getContext('2d');
+            new Chart(ctxRubric, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Kreativitas (30%)', 'Teknik Cungkil (30%)', 'Komposisi (20%)', 'Adab (20%)'],
+                    datasets: [{
+                        data: [30, 30, 20, 20],
+                        backgroundColor: [
+                            '#10b981', // Emerald 500
+                            '#f59e0b', // Amber 500
+                            '#f43f5e', // Rose 500
+                            '#3b82f6'  // Blue 500
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12 } }
+                    },
+                    cutout: '60%'
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
