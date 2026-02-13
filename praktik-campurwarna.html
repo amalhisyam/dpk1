@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorium Warna: RGB vs CMYK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Serif:ital,wght@0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #18181b; /* zinc-900 (Dark Mode default for color perception) */
+            color: #f4f4f5; /* zinc-100 */
+        }
+        
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif', serif;
+        }
+
+        /* RGB Mixing Logic (Additive - Light) */
+        .rgb-stage {
+            background-color: black;
+            position: relative;
+            overflow: hidden;
+            border-radius: 50%; /* Circle Viewport */
+        }
+        .light-beam {
+            position: absolute;
+            border-radius: 50%;
+            mix-blend-mode: screen; /* CRITICAL: Simulates Additive Light */
+            filter: blur(20px);
+            opacity: 1;
+            transition: background-color 0.1s;
+        }
+
+        /* CMYK Mixing Logic (Subtractive - Ink) */
+        .cmyk-stage {
+            background-color: white; /* Paper base */
+            position: relative;
+            isolation: isolate; /* Create stacking context */
+        }
+        .ink-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            mix-blend-mode: multiply; /* CRITICAL: Simulates Subtractive Ink */
+            transition: opacity 0.1s;
+        }
+
+        /* Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #52525b;
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #52525b;
+            border-radius: 2px;
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981;
+        }
+    </style>
+    <!-- Visualization: Using mix-blend-mode 'screen' for RGB (Light) and 'multiply' for CMYK (Ink) -->
+    <!-- Structure:
+         1. Hero: Theory Introduction.
+         2. Lab 1: RGB (Screen/Light) Mixer.
+         3. Lab 2: CMYK (Print/Ink) Mixer.
+         4. Gamut Warning: Interactive tool showing "Out of Gamut" alert.
+         5. Assessment: Chart comparing Color Range.
+    -->
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="font-bold text-lg text-emerald-400">Teori Warna DKV</span>
+                <span class="text-[10px] text-zinc-400">Modul 4: Manajemen Warna</span>
+            </div>
+            <div class="hidden md:flex space-x-6 text-sm font-medium">
+                <button onclick="scrollToSection('theory')" class="hover:text-emerald-400 transition">Teori Dasar</button>
+                <button onclick="scrollToSection('rgb-lab')" class="text-red-400 hover:text-red-300 transition">Lab RGB</button>
+                <button onclick="scrollToSection('cmyk-lab')" class="text-cyan-400 hover:text-cyan-300 transition">Lab CMYK</button>
+                <button onclick="scrollToSection('gamut')" class="hover:text-emerald-400 transition">Bahaya Gamut</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-zinc-900 py-16 border-b border-zinc-800" id="theory">
+        <div class="container mx-auto px-4 text-center max-w-4xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
+                Cahaya vs Tinta <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-green-500 to-blue-500">RGB</span> 
+                <span class="text-2xl align-middle mx-2 text-zinc-500">vs</span> 
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400">CMYK</span>
+            </h1>
+            <p class="text-lg text-zinc-400 mb-8 max-w-2xl mx-auto">
+                Mengapa warna desainmu cerah di HP tapi kusam saat diprint? Pelajari perbedaan prinsip fisika antara mencampur cahaya (Layar) dan mencampur pigmen (Kertas).
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mt-12">
+                <!-- RGB Card -->
+                <div class="bg-zinc-800 p-6 rounded-xl border-l-4 border-red-500 hover:bg-zinc-750 transition relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 opacity-10 text-9xl font-bold -mr-4 -mt-4 text-red-500 group-hover:scale-110 transition">R</div>
+                    <h3 class="text-xl font-bold text-red-400 mb-2">RGB (Additive)</h3>
+                    <ul class="text-sm text-zinc-300 space-y-2">
+                        <li>🔆 <strong>Sumber:</strong> Cahaya (Lampu/LED).</li>
+                        <li>📺 <strong>Media:</strong> Layar HP, TV, Monitor, Kamera.</li>
+                        <li>➕ <strong>Rumus:</strong> Red + Green + Blue = <strong class="text-white">PUTIH</strong>.</li>
+                        <li>✨ <strong>Sifat:</strong> Semakin ditambah, semakin <strong>terang</strong>.</li>
+                    </ul>
+                </div>
+
+                <!-- CMYK Card -->
+                <div class="bg-zinc-100 p-6 rounded-xl border-l-4 border-cyan-500 text-zinc-900 relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 opacity-10 text-9xl font-bold -mr-4 -mt-4 text-cyan-500 group-hover:scale-110 transition">C</div>
+                    <h3 class="text-xl font-bold text-cyan-700 mb-2">CMYK (Subtractive)</h3>
+                    <ul class="text-sm text-zinc-700 space-y-2">
+                        <li>🎨 <strong>Sumber:</strong> Tinta / Pigmen.</li>
+                        <li>📄 <strong>Media:</strong> Kertas, Spanduk, Kaos, Majalah.</li>
+                        <li>➖ <strong>Rumus:</strong> Cyan + Magenta + Yellow = <strong class="text-black">HITAM</strong>.</li>
+                        <li>🌑 <strong>Sifat:</strong> Semakin ditambah, semakin <strong>gelap</strong>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Lab 1: RGB Mixer -->
+    <section id="rgb-lab" class="py-16 bg-black border-b border-zinc-800">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                
+                <!-- Controls -->
+                <div class="w-full md:w-1/3 space-y-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                    <div class="text-center md:text-left">
+                        <h2 class="text-2xl font-bold text-white mb-2">💡 Lab Cahaya (RGB)</h2>
+                        <p class="text-xs text-zinc-400">Geser slider. Perhatikan saat ketiga warna bertemu di tengah, mereka menciptakan PUTIH.</p>
+                    </div>
+
+                    <!-- Red Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-red-500 mb-1">
+                            <span>RED (Merah)</span>
+                            <span id="val-r">255</span>
+                        </div>
+                        <input type="range" id="range-r" min="0" max="255" value="255" oninput="updateRGB()">
+                    </div>
+
+                    <!-- Green Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-green-500 mb-1">
+                            <span>GREEN (Hijau)</span>
+                            <span id="val-g">0</span>
+                        </div>
+                        <input type="range" id="range-g" min="0" max="255" value="0" oninput="updateRGB()">
+                    </div>
+
+                    <!-- Blue Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-blue-500 mb-1">
+                            <span>BLUE (Biru)</span>
+                            <span id="val-b">0</span>
+                        </div>
+                        <input type="range" id="range-b" min="0" max="255" value="0" oninput="updateRGB()">
+                    </div>
+
+                    <div class="mt-4 p-4 rounded bg-zinc-800 text-center">
+                        <span class="text-xs text-zinc-500">Kode Warna Hex</span>
+                        <div id="hex-code" class="text-xl font-mono font-bold text-white">#FF0000</div>
+                    </div>
+                </div>
+
+                <!-- Visualizer -->
+                <div class="w-full md:w-2/3 flex justify-center">
+                    <div class="rgb-stage w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-zinc-800 relative">
+                        <!-- Instructions Overlay -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-30">
+                            <span class="text-xs text-white uppercase tracking-widest">Ruang Gelap</span>
+                        </div>
+                        
+                        <!-- Three Light Beams -->
+                        <!-- Top (Red) -->
+                        <div id="beam-r" class="light-beam w-2/3 h-2/3 top-0 left-1/2 transform -translate-x-1/2 bg-red-600"></div>
+                        <!-- Bottom Left (Green) -->
+                        <div id="beam-g" class="light-beam w-2/3 h-2/3 bottom-0 left-0 bg-green-600"></div>
+                        <!-- Bottom Right (Blue) -->
+                        <div id="beam-b" class="light-beam w-2/3 h-2/3 bottom-0 right-0 bg-blue-600"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Lab 2: CMYK Mixer -->
+    <section id="cmyk-lab" class="py-16 bg-white text-zinc-900 border-b border-zinc-200">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                
+                <!-- Visualizer (Left for variety) -->
+                <div class="w-full md:w-2/3 flex justify-center order-2 md:order-1">
+                    <div class="cmyk-stage w-[300px] h-[300px] md:w-[400px] md:h-[400px] shadow-2xl border border-zinc-200 relative rounded-lg">
+                         <!-- Instructions Overlay -->
+                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-20">
+                            <span class="text-xs text-black uppercase tracking-widest font-bold">Kertas Putih</span>
+                        </div>
+
+                        <!-- Ink Layers -->
+                        <!-- Cyan (Top Left) -->
+                        <div id="ink-c" class="ink-layer bg-cyan-400 rounded-full w-2/3 h-2/3 absolute top-0 left-0" style="opacity: 0;"></div>
+                        <!-- Magenta (Top Right) -->
+                        <div id="ink-m" class="ink-layer bg-pink-500 rounded-full w-2/3 h-2/3 absolute top-0 right-0" style="opacity: 1;"></div>
+                        <!-- Yellow (Bottom Center) -->
+                        <div id="ink-y" class="ink-layer bg-yellow-400 rounded-full w-2/3 h-2/3 absolute bottom-0 left-1/2 transform -translate-x-1/2" style="opacity: 0;"></div>
+                        <!-- Key/Black (Center Small) -->
+                        <div id="ink-k" class="ink-layer bg-black rounded-full w-1/3 h-1/3 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style="opacity: 0;"></div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="w-full md:w-1/3 space-y-6 bg-zinc-50 p-6 rounded-xl border border-zinc-200 shadow-sm order-1 md:order-2">
+                    <div class="text-center md:text-left">
+                        <h2 class="text-2xl font-bold text-zinc-900 mb-2">🖨️ Lab Tinta (CMYK)</h2>
+                        <p class="text-xs text-zinc-500">Di atas kertas putih, tumpukan tinta akan menghalangi pantulan cahaya. Tumpukan C+M+Y = Coklat/Hitam.</p>
+                    </div>
+
+                    <!-- Cyan Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-cyan-600 mb-1">
+                            <span>CYAN (Biru Muda)</span>
+                            <span id="val-c">0%</span>
+                        </div>
+                        <input type="range" id="range-c" min="0" max="100" value="0" oninput="updateCMYK()">
+                    </div>
+
+                    <!-- Magenta Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-pink-600 mb-1">
+                            <span>MAGENTA (Merah Muda)</span>
+                            <span id="val-m">100%</span>
+                        </div>
+                        <input type="range" id="range-m" min="0" max="100" value="100" oninput="updateCMYK()">
+                    </div>
+
+                    <!-- Yellow Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-yellow-600 mb-1">
+                            <span>YELLOW (Kuning)</span>
+                            <span id="val-y">0%</span>
+                        </div>
+                        <input type="range" id="range-y" min="0" max="100" value="0" oninput="updateCMYK()">
+                    </div>
+
+                     <!-- Black Slider -->
+                     <div>
+                        <div class="flex justify-between text-xs font-bold text-black mb-1">
+                            <span>KEY (Hitam)</span>
+                            <span id="val-k">0%</span>
+                        </div>
+                        <input type="range" id="range-k" min="0" max="100" value="0" oninput="updateCMYK()">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Gamut Warning Simulation -->
+    <section id="gamut" class="py-16 bg-zinc-900">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">⚠️ Masalah "Out of Gamut"</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Explanation -->
+                <div class="space-y-4">
+                    <p class="text-zinc-400">
+                        Layar (RGB) mampu menampilkan jutaan warna cerah (termasuk neon). Namun, tinta (CMYK) memiliki keterbatasan jangkauan warna (Gamut). 
+                    </p>
+                    <p class="text-zinc-400">
+                        Jika kamu mendesain dengan warna neon di layar, hasilnya akan <strong>turun (kusam)</strong> saat dicetak.
+                    </p>
+                    
+                    <div class="bg-zinc-800 p-4 rounded-lg mt-4">
+                        <label class="block text-sm font-bold text-white mb-2">Pilih Warna Layar (RGB):</label>
+                        <input type="color" id="gamut-picker" value="#00ff00" class="w-full h-12 cursor-pointer bg-transparent border-none" oninput="checkGamut()">
+                        <p class="text-xs text-zinc-500 mt-2">Cobalah pilih warna hijau neon atau biru terang.</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Result -->
+                <div class="bg-white rounded-lg p-6 flex flex-col items-center justify-center text-zinc-900 relative">
+                    <div class="flex gap-4 w-full">
+                        <div class="flex-1 text-center">
+                            <div id="preview-rgb" class="w-full h-24 rounded shadow-inner mb-2 bg-[#00ff00]"></div>
+                            <span class="text-xs font-bold">Di Layar (RGB)</span>
+                        </div>
+                        <div class="flex flex-col justify-center items-center text-2xl text-zinc-300">
+                            ➝
+                        </div>
+                        <div class="flex-1 text-center relative">
+                            <div id="preview-cmyk" class="w-full h-24 rounded shadow-inner mb-2 bg-[#009900]"></div>
+                            <span class="text-xs font-bold">Hasil Cetak (CMYK)</span>
+                            
+                            <!-- Warning Badge -->
+                            <div id="gamut-warning" class="absolute -top-2 -right-2 bg-yellow-400 text-black px-2 py-1 rounded text-[10px] font-bold shadow animate-pulse">
+                                ⚠️ WARNA BERUBAH!
+                            </div>
+                        </div>
+                    </div>
+                    <p id="gamut-message" class="text-xs text-center mt-4 text-red-600 font-bold bg-red-50 p-2 rounded w-full">
+                        Warna ini diluar jangkauan mesin cetak! Mesin akan mencari warna terdekat yang lebih kusam.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chart comparison -->
+             <div class="mt-12 bg-zinc-800 p-6 rounded-xl">
+                <h3 class="text-center text-white font-bold mb-4">Perbandingan Jangkauan Warna (Gamut)</h3>
+                <div class="relative w-full h-64 max-w-2xl mx-auto">
+                    <canvas id="gamutChart"></canvas>
+                </div>
+                <p class="text-center text-xs text-zinc-500 mt-2">Grafik visualisasi jumlah warna yang bisa dihasilkan.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-zinc-950 text-emerald-100 py-8 border-t-4 border-emerald-600 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p class="font-serif italic text-lg mb-2">"2026 -- Modul Ajar DKV kelas X"</p>
+            <p class="text-sm opacity-90 font-light">Persembahan <span class="font-bold text-emerald-400">SyamKibar</span> untuk <span class="font-bold text-white">SMK Islam Al-Amal Surabaya</span></p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. RGB Mixer Logic ---
+        function updateRGB() {
+            const r = document.getElementById('range-r').value;
+            const g = document.getElementById('range-g').value;
+            const b = document.getElementById('range-b').value;
+
+            // Update Labels
+            document.getElementById('val-r').innerText = r;
+            document.getElementById('val-g').innerText = g;
+            document.getElementById('val-b').innerText = b;
+
+            // Update Beams
+            // We use standard CSS background color, but the 'mix-blend-mode: screen' in CSS does the mixing magic
+            document.getElementById('beam-r').style.backgroundColor = `rgb(${r}, 0, 0)`;
+            document.getElementById('beam-g').style.backgroundColor = `rgb(0, ${g}, 0)`;
+            document.getElementById('beam-b').style.backgroundColor = `rgb(0, 0, ${b})`;
+
+            // Update Hex Code Display
+            const hex = "#" + ((1 << 24) + (parseInt(r) << 16) + (parseInt(g) << 8) + parseInt(b)).toString(16).slice(1).toUpperCase();
+            document.getElementById('hex-code').innerText = hex;
+            document.getElementById('hex-code').style.color = hex;
+        }
+
+        // --- 2. CMYK Mixer Logic ---
+        function updateCMYK() {
+            const c = document.getElementById('range-c').value;
+            const m = document.getElementById('range-m').value;
+            const y = document.getElementById('range-y').value;
+            const k = document.getElementById('range-k').value;
+
+            // Update Labels
+            document.getElementById('val-c').innerText = c + '%';
+            document.getElementById('val-m').innerText = m + '%';
+            document.getElementById('val-y').innerText = y + '%';
+            document.getElementById('val-k').innerText = k + '%';
+
+            // Update Opacity (Simulating Ink Density)
+            document.getElementById('ink-c').style.opacity = c / 100;
+            document.getElementById('ink-m').style.opacity = m / 100;
+            document.getElementById('ink-y').style.opacity = y / 100;
+            document.getElementById('ink-k').style.opacity = k / 100;
+        }
+
+        // --- 3. Gamut Check Logic (Simplified Simulation) ---
+        function checkGamut() {
+            const hex = document.getElementById('gamut-picker').value;
+            
+            // Convert Hex to RGB
+            const r = parseInt(hex.substr(1,2), 16);
+            const g = parseInt(hex.substr(3,2), 16);
+            const b = parseInt(hex.substr(5,2), 16);
+
+            document.getElementById('preview-rgb').style.backgroundColor = hex;
+
+            // Simple Logic to determine if color is "Out of Gamut" (Neon/Bright colors usually)
+            // If any channel is very high while others are low (high saturation), it's likely hard to print
+            // Or if R, G, or B is pure 255
+            
+            // Convert to simple CMYK (naive formula)
+            let c = 1 - (r / 255);
+            let m = 1 - (g / 255);
+            let y = 1 - (b / 255);
+            let k = Math.min(c, m, y);
+            
+            c = (c - k) / (1 - k) || 0;
+            m = (m - k) / (1 - k) || 0;
+            y = (y - k) / (1 - k) || 0;
+
+            // SIMULATE "DULLING" effect for Print Preview
+            // If the color is very saturated, desaturate it slightly
+            // We simulate this by mixing the original RGB with a grey version
+            
+            const maxVal = Math.max(r, g, b);
+            const minVal = Math.min(r, g, b);
+            const saturation = (maxVal - minVal) / maxVal;
+
+            let isOutOfGamut = false;
+            
+            // Arbitrary threshold for "Neon" colors detection
+            if (saturation > 0.8 && maxVal > 200) {
+                isOutOfGamut = true;
+            }
+
+            const warningBadge = document.getElementById('gamut-warning');
+            const message = document.getElementById('gamut-message');
+            const cmykPreview = document.getElementById('preview-cmyk');
+
+            if (isOutOfGamut) {
+                warningBadge.style.display = 'block';
+                message.style.display = 'block';
+                message.innerText = "Warna ini terlalu terang (Neon)! Hasil cetak akan turun drastis.";
+                
+                // Show a duller version
+                const dullFactor = 0.7; // Darken/Desaturate
+                cmykPreview.style.backgroundColor = `rgb(${r*dullFactor}, ${g*dullFactor}, ${b*dullFactor})`;
+            } else {
+                warningBadge.style.display = 'none';
+                message.style.display = 'none';
+                // Show same color (safe)
+                cmykPreview.style.backgroundColor = hex;
+            }
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+        }
+
+        // --- 4. Chart.js Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRGB(); // Init RGB
+            updateCMYK(); // Init CMYK
+            checkGamut(); // Init Gamut
+
+            const ctx = document.getElementById('gamutChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mata Manusia', 'Monitor (RGB)', 'Mesin Cetak (CMYK)'],
+                    datasets: [{
+                        label: 'Jangkauan Warna (Juta)',
+                        data: [10, 16.7, 1.5], // Approximate conceptual values
+                        backgroundColor: [
+                            'rgba(255, 255, 255, 0.2)',
+                            'rgba(74, 222, 128, 0.8)', // Green-400
+                            'rgba(34, 211, 238, 0.8)'  // Cyan-400
+                        ],
+                        borderColor: [
+                            'rgba(255, 255, 255, 1)',
+                            'rgba(74, 222, 128, 1)',
+                            'rgba(34, 211, 238, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.raw === 10) return "Spektrum Penuh (Visible Light)";
+                                    if (context.raw === 16.7) return "~16.7 Juta Warna";
+                                    if (context.raw === 1.5) return "Hanya ribuan warna tinta";
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a1a1aa' },
+                            grid: { color: '#3f3f46' }
+                        },
+                        y: {
+                            ticks: { color: '#f4f4f5' }
+                        }
+                    }
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
