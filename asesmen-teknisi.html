@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Asesmen Administrasi Lab DKV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Professional Slate & Clarity Blue (Clean background, high contrast for printing) -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            height: 300px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { 
+                display: block !important; 
+                width: 100%;
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            body { background: white; }
+            .glass-card { border: 1px solid #ddd; box-shadow: none; }
+            .page-break { page-break-before: always; }
+        }
+
+        .tab-active {
+            border-bottom: 4px solid #2563eb;
+            color: #2563eb;
+        }
+
+        .question-box {
+            border-left: 4px solid #e2e8f0;
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="p-0 md:p-6">
+
+    <!-- Application Structure Plan: 
+         Aplikasi ini dirancang sebagai "Assessment Generator". 
+         1. Dashboard Kontrol: Navigasi untuk memilih jenis asesmen.
+         2. Content Area: Menampilkan instrumen asesmen Pra (Diagnostik) dan Paska (Formatif/Sumatif).
+         3. Print Optimization: Layout khusus yang menggunakan CSS media queries agar hasil cetak terlihat seperti dokumen resmi.
+         4. Scoring Matrix: Visualisasi Chart.js untuk membantu evaluator memetakan area mana yang paling lemah/kuat secara umum.
+    -->
+
+    <!-- Visualization & Content Choices: 
+         - Radar Chart (Chart.js): Digunakan untuk memetakan profil kompetensi teknisi dalam 5 pilar (Inventaris, Ops, Maintenance, Legal, Digital).
+         - Structured Lists: Pertanyaan pilihan ganda dan isian singkat untuk asesmen tertulis.
+         - Print Mode View: Menyediakan tampilan kertas A4 virtual.
+         - CONFIRMATION: NO SVG used. NO Mermaid used.
+    -->
+
+    <div class="max-w-5xl mx-auto bg-white min-h-screen shadow-lg md:rounded-3xl overflow-hidden print:shadow-none print:rounded-none">
+        
+        <!-- Header Non-Print -->
+        <header class="no-print bg-slate-900 text-white p-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-400">Instrumen Asesmen Teknisi</h1>
+                    <p class="text-slate-400 text-sm uppercase tracking-widest">Manajemen Lab & Studio DKV</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition">
+                        🖨️ Cetak Dokumen
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="flex gap-6 mt-8 border-b border-slate-700">
+                <button onclick="switchTab('pra')" id="tab-pra" class="pb-3 px-2 tab-active transition font-semibold">Asesmen Pra (Diagnostik)</button>
+                <button onclick="switchTab('paska')" id="tab-paska" class="pb-3 px-2 transition font-semibold">Asesmen Paska (Hasil)</button>
+                <button onclick="switchTab('analisis')" id="tab-analisis" class="pb-3 px-2 transition font-semibold">Matriks Kompetensi</button>
+            </nav>
+        </header>
+
+        <main class="p-8 print:p-0">
+            
+            <!-- SECTION: ASESMEN PRA -->
+            <div id="content-pra" class="tab-pane block print:block">
+                <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-xl font-bold uppercase">Asesmen Pra-Penyampaian Materi</h2>
+                        <p class="text-sm text-slate-500">Tujuan: Mengukur pemahaman awal teknisi mengenai tata kelola laboratorium.</p>
+                    </div>
+                    <div class="text-right text-xs italic text-slate-400 no-print">Format Cetak A4 Ready</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8 text-sm border p-4 rounded-lg bg-slate-50">
+                    <div><span class="font-bold">Nama Petugas:</span> ............................................</div>
+                    <div><span class="font-bold">Tanggal:</span> ............................................</div>
+                    <div><span class="font-bold">Unit Lab/Studio:</span> ............................................</div>
+                    <div><span class="font-bold">Durasi:</span> 15 Menit</div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">1. Menurut Anda, dokumen apa yang paling kritis jika sebuah kamera mirrorless tiba-tiba tidak ditemukan di lemari penyimpanan?</p>
+                        <div class="grid grid-cols-1 gap-2 text-sm ml-4">
+                            <label>□ A. Buku Manual</label>
+                            <label>□ B. Buku Inventaris & Form Peminjaman Terakhir</label>
+                            <label>□ C. K3 Studio</label>
+                            <label>□ D. Brosur Produk</label>
+                        </div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">2. Apa tindakan pertama yang Anda lakukan jika menemukan kabel lighting studio mengelupas?</p>
+                        <div class="w-full h-12 border-b border-dashed border-slate-400 mt-2"></div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">3. Seberapa sering idealnya pembersihan sensor kamera (sensor check) dilakukan pada alat yang aktif digunakan praktik?</p>
+                        <div class="grid grid-cols-1 gap-2 text-sm ml-4">
+                            <label>□ A. Setahun sekali</label>
+                            <label>□ B. Menunggu sampai muncul noda di hasil foto</label>
+                            <label>□ C. Setiap minggu atau setelah pemakaian intensif</label>
+                            <label>□ D. Tidak perlu dibersihkan</label>
+                        </div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">4. Identifikasi 3 risiko terbesar yang ada di Studio Foto/Video DKV terkait keselamatan kerja:</p>
+                        <div class="space-y-4 mt-2">
+                            <div class="border-b border-dashed border-slate-400 w-full h-6"></div>
+                            <div class="border-b border-dashed border-slate-400 w-full h-6"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: ASESMEN PASKA -->
+            <div id="content-paska" class="tab-pane hidden page-break">
+                <div class="border-b-2 border-slate-900 pb-4 mb-6">
+                    <h2 class="text-xl font-bold uppercase">Asesmen Paska-Penyampaian (Post-Test)</h2>
+                    <p class="text-sm text-slate-500">Tujuan: Mengevaluasi penguasaan 5 Kategori Dokumen Lab DKV yang telah dipaparkan.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6 no-print">
+                        <p class="text-xs text-blue-800 font-bold uppercase mb-1 italic">Instruksi Evaluator:</p>
+                        <p class="text-sm text-blue-700">Gunakan bagian ini setelah teknisi mempelajari materi "5 Kategori Dokumen Utama".</p>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">1. Cocokkan dokumen berikut dengan kategori yang tepat (Tuliskan Huruf):</p>
+                        <div class="grid grid-cols-2 gap-4 text-sm ml-4">
+                            <div>
+                                1. Logbook Harian [....]<br>
+                                2. Kartu Riwayat Alat [....]<br>
+                                3. Form Kerusakan [....]<br>
+                                4. Manual Book PDF [....]
+                            </div>
+                            <div>
+                                A. Pemeliharaan<br>
+                                B. Inventarisasi<br>
+                                C. Panduan/Manual<br>
+                                D. Operasional
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">2. Dalam sistem digitalisasi, apa fungsi utama QR Code yang ditempel pada badan kamera?</p>
+                        <div class="w-full h-12 border-b border-dashed border-slate-400 mt-2"></div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">3. Mengapa "Berita Acara Kerusakan" dianggap sebagai dokumen Legal, bukan sekadar operasional?</p>
+                        <div class="w-full h-16 border-b border-dashed border-slate-400 mt-2"></div>
+                    </div>
+
+                    <div class="question-box">
+                        <p class="font-semibold mb-2">4. Urutkan alur digitalisasi administrasi yang benar menurut panduan:</p>
+                        <p class="text-xs text-slate-500 italic mb-2">(Isi angka 1-3 pada kotak)</p>
+                        <div class="flex gap-4">
+                            <div class="border p-2 rounded text-center text-sm w-32">[ ]<br>Cloud Library</div>
+                            <div class="border p-2 rounded text-center text-sm w-32">[ ]<br>QR Tagging</div>
+                            <div class="border p-2 rounded text-center text-sm w-32">[ ]<br>Cloud Spreadsheet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: ANALISIS (HIDDEN ON PRINT BY DEFAULT, CAN BE PRINTED SEPARATELY) -->
+            <div id="content-analisis" class="tab-pane hidden">
+                <div class="mb-10 text-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Matriks Pemetaan Kompetensi</h2>
+                    <p class="text-slate-600">Visualisasi area yang perlu diperkuat berdasarkan hasil kolektif asesmen teknisi.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                    <div class="chart-container">
+                        <canvas id="radarCompChart"></canvas>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                            <h4 class="font-bold text-amber-800 text-sm">Target Capaian:</h4>
+                            <p class="text-xs text-amber-700">Minimal skor rata-rata adalah 7.5 di setiap pilar untuk mendapatkan sertifikasi kelayakan pengelola lab studio.</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 text-sm">Interpretasi Radar:</h4>
+                            <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4">
+                                <li><strong>Area Luar:</strong> Kompetensi Mandiri.</li>
+                                <li><strong>Area Tengah:</strong> Perlu Pendampingan.</li>
+                                <li><strong>Area Pusat:</strong> Perlu Pelatihan Dasar.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="no-print bg-slate-50 p-6 border-t border-slate-200 text-center text-xs text-slate-500">
+            Aplikasi Asesmen Dokumentasi Lab DKV - SMK Teknologi Informasi. Gunakan menu Cetak untuk mendapatkan formulir fisik.
+        </footer>
+    </div>
+
+    <script>
+        // Tab Navigation
+        function switchTab(tabId) {
+            // Hide all
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+            
+            // Show target
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('tab-active');
+
+            if(tabId === 'analisis') {
+                renderChart();
+            }
+        }
+
+        // Radar Chart for Competency
+        let myRadarChart = null;
+        function renderChart() {
+            const ctx = document.getElementById('radarCompChart').getContext('2d');
+            
+            if (myRadarChart) myRadarChart.destroy();
+
+            myRadarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Inventarisasi',
+                        'Operasional',
+                        'Pemeliharaan',
+                        'Aspek Legal',
+                        'Digitalisasi'
+                    ],
+                    datasets: [{
+                        label: 'Skor Kompetensi Saat Ini',
+                        data: [8, 6, 9, 5, 4],
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: 'rgb(37, 99, 235)',
+                        pointBackgroundColor: 'rgb(37, 99, 235)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(37, 99, 235)'
+                    }, {
+                        label: 'Standar Minimal',
+                        data: [7.5, 7.5, 7.5, 7.5, 7.5],
+                        fill: false,
+                        borderColor: 'rgba(220, 38, 38, 0.5)',
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: { borderWidth: 3 }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 10,
+                            ticks: { stepSize: 2 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Initialize display
+        window.onload = () => {
+            // Default view is Pra-Test
+        };
+    </script>
+</body>
+</html>
