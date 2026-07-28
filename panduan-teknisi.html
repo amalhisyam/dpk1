@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Dokumentasi Lab & Studio DKV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Professionalism (Neutral Slate, Amber accents, Soft Cream background) -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfcf9;
+            color: #334155;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .nav-active {
+            border-bottom: 3px solid #f59e0b;
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .template-box {
+            background-color: #1e293b;
+            color: #f8fafc;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Application Structure Plan: 
+         Aplikasi menggunakan pendekatan Dashboard Tematik. 
+         1. Header: Branding dan Navigasi Utama.
+         2. Overview: Ringkasan kategori dalam bentuk visual (Chart) untuk pemahaman cepat.
+         3. Dynamic Explorer: Area utama di mana konten dari 5 kategori dokumen ditampilkan secara interaktif.
+         4. Template Engine: Viewer untuk dokumen-dokumen siap pakai yang bisa disalin.
+         5. Roadmap Digitalisasi: Panduan interaktif menuju pengelolaan modern.
+         Dipilih karena pengguna (Teknisi) butuh akses cepat ke informasi spesifik tanpa harus membaca dokumen linear yang panjang.
+    -->
+
+    <!-- Visualization & Content Choices: 
+         - Bar Chart (Chart.js): Membandingkan jumlah dokumen/urgensi tiap kategori (Inform -> Compare).
+         - Interactive Grid: Menampilkan 5 kategori utama dengan detail hover/klik (Organize).
+         - Live Template Viewer: Menampilkan blok teks templat yang diatur via JS (Text-based Interaction).
+         - Progress Steps: Visualisasi alur digitalisasi menggunakan Tailwind grid/flex (Process Flow).
+         - Justification: Menghindari overload informasi dengan membagi konten ke dalam tab yang saling terhubung secara logis.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="sticky top-0 z-50 glass-card shadow-sm px-4 py-4 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">D</div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">Admin Lab DKV</h1>
+                    <p class="text-xs text-slate-500 italic">Sistem Dokumentasi Teknisi SMK</p>
+                </div>
+            </div>
+            <nav class="flex flex-wrap justify-center gap-4 text-sm font-medium">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn nav-active pb-1">Dashboard</button>
+                <button onclick="switchTab('kategori')" id="nav-kategori" class="nav-btn pb-1">Kategori Dokumen</button>
+                <button onclick="switchTab('templat')" id="nav-templat" class="nav-btn pb-1">Templat Siap Pakai</button>
+                <button onclick="switchTab('digital')" id="nav-digital" class="nav-btn pb-1">Digitalisasi</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pb-20">
+
+        <!-- SECTION: DASHBOARD -->
+        <section id="dashboard" class="tab-content active">
+            <div class="mb-10 text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Ringkasan Tata Kelola</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">Selamat datang di pusat informasi administrasi Lab DKV. Bagian ini memberikan gambaran umum mengenai distribusi dokumen dan prioritas pengelolaan aset berteknologi tinggi.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-12">
+                <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold mb-4 text-slate-700">Analisis Kebutuhan Dokumen</h3>
+                    <div class="chart-container">
+                        <canvas id="analysisChart"></canvas>
+                    </div>
+                    <p class="mt-4 text-sm text-slate-500 italic">Grafik ini menunjukkan tingkat urgensi dan volume dokumen yang harus dikelola pada setiap kategori utama.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-amber-50 p-6 rounded-2xl border border-amber-100">
+                        <h4 class="font-bold text-amber-800 mb-2">Mengapa Dokumentasi Penting?</h4>
+                        <ul class="text-sm text-amber-900 space-y-2 list-disc pl-5">
+                            <li><strong>Transparansi:</strong> Menjamin kejelasan kepemilikan dan penggunaan aset.</li>
+                            <li><strong>Kesiapan Alat:</strong> Memastikan kamera, PC, dan lighting selalu dalam kondisi <i>ready</i>.</li>
+                            <li><strong>K3:</strong> Mengurangi risiko kecelakaan kerja di studio fotografi dan cetak.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-100 p-6 rounded-2xl">
+                        <h4 class="font-bold text-slate-800 mb-2">Fokus Utama Teknisi</h4>
+                        <p class="text-sm text-slate-600">Teknisi DKV mengelola perangkat bernilai tinggi. Dokumen yang baik adalah perisai pelindung aset sekolah sekaligus panduan operasional bagi siswa.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: KATEGORI -->
+        <section id="kategori" class="tab-content">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Struktur 5 Kategori Dokumen Utama</h2>
+                <p class="text-slate-600">Gunakan navigasi di bawah ini untuk mengeksplorasi rincian setiap kategori dokumentasi yang direkomendasikan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-8">
+                <button onclick="showCategory(0)" class="cat-btn p-4 rounded-xl text-center border transition-all hover:bg-amber-500 hover:text-white bg-white text-slate-600 border-slate-200 shadow-sm font-semibold text-xs md:text-sm" id="cat-btn-0">Inventaris & Aset</button>
+                <button onclick="showCategory(1)" class="cat-btn p-4 rounded-xl text-center border transition-all hover:bg-amber-500 hover:text-white bg-white text-slate-600 border-slate-200 shadow-sm font-semibold text-xs md:text-sm" id="cat-btn-1">Operasional</button>
+                <button onclick="showCategory(2)" class="cat-btn p-4 rounded-xl text-center border transition-all hover:bg-amber-500 hover:text-white bg-white text-slate-600 border-slate-200 shadow-sm font-semibold text-xs md:text-sm" id="cat-btn-2">Pemeliharaan</button>
+                <button onclick="showCategory(3)" class="cat-btn p-4 rounded-xl text-center border transition-all hover:bg-amber-500 hover:text-white bg-white text-slate-600 border-slate-200 shadow-sm font-semibold text-xs md:text-sm" id="cat-btn-3">Berita Acara</button>
+                <button onclick="showCategory(4)" class="cat-btn p-4 rounded-xl text-center border transition-all hover:bg-amber-500 hover:text-white bg-white text-slate-600 border-slate-200 shadow-sm font-semibold text-xs md:text-sm" id="cat-btn-4">Panduan/Manual</button>
+            </div>
+
+            <div id="category-detail" class="glass-card p-8 rounded-2xl min-h-[300px]">
+                <!-- Content injected via JS -->
+            </div>
+        </section>
+
+        <!-- SECTION: TEMPLAT -->
+        <section id="templat" class="tab-content">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Templat Dokumen Siap Pakai</h2>
+                <p class="text-slate-600">Salin dan sesuaikan templat teks di bawah ini untuk kebutuhan administrasi harian laboratorium Anda.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mb-6">
+                <button onclick="loadTemplate('pinjam')" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700 transition">Form Peminjaman</button>
+                <button onclick="loadTemplate('rusak')" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700 transition">Laporan Kerusakan</button>
+                <button onclick="loadTemplate('maintenance')" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700 transition">Checklist Perawatan</button>
+            </div>
+
+            <div id="template-viewer" class="relative group">
+                <div id="template-content" class="template-box min-h-[400px]">
+                    Silakan pilih salah satu templat di atas untuk menampilkan isi dokumen...
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: DIGITALISASI -->
+        <section id="digital" class="tab-content">
+            <div class="mb-10">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Transformasi Digital Lab DKV</h2>
+                <p class="text-slate-600">Panduan langkah-demi-langkah untuk mengubah sistem manual menjadi ekosistem digital yang efisien.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-2xl border-l-4 border-amber-500">
+                    <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold mb-4 uppercase">Langkah 01</span>
+                    <h3 class="font-bold text-slate-800 mb-2">Barcode & QR Code</h3>
+                    <p class="text-sm text-slate-600">Terapkan stiker QR Code pada setiap bodi kamera, lensa, dan unit PC. Hubungkan ke database cloud untuk akses status instan.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl border-l-4 border-blue-500">
+                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-4 uppercase">Langkah 02</span>
+                    <h3 class="font-bold text-slate-800 mb-2">Cloud Spreadsheet</h3>
+                    <p class="text-sm text-slate-600">Gunakan Google Forms untuk peminjaman alat oleh siswa. Data akan tercatat otomatis dengan stempel waktu yang akurat.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl border-l-4 border-green-500">
+                    <span class="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold mb-4 uppercase">Langkah 03</span>
+                    <h3 class="font-bold text-slate-800 mb-2">Digital Library</h3>
+                    <p class="text-sm text-slate-600">Simpan PDF manual book, kartu garansi, dan SOP di Cloud Drive yang dapat diakses oleh teknisi dan guru pengampu kapan saja.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-10 mt-20 px-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <p class="text-sm font-semibold text-white">&copy; 2026 Panduan Teknisi Lab DKV SMK</p>
+                <p class="text-xs">Sistem Informasi Pengelolaan Alat & Studio Praktikum</p>
+            </div>
+            <div class="flex gap-6 text-xs">
+                <a href="#" class="hover:text-amber-500 transition">Panduan K3</a>
+                <a href="#" class="hover:text-amber-500 transition">Daftar Aset</a>
+                <a href="#" class="hover:text-amber-500 transition">SOP Studio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Data Store
+        const categories = [
+            {
+                title: "Kelompok Inventarisasi & Pengodean Aset",
+                desc: "Berfungsi mencatat seluruh kepemilikan alat, spesifikasi teknis, lokasi penyimpanan, dan status kelayakan.",
+                items: [
+                    "Buku Inventaris Alat & Perangkat: Identitas lengkap barang (SN, Merek, Lokasi).",
+                    "Kartu Riwayat Alat (History Card): Rekam perbaikan khusus untuk unit high-end (Kamera, PC Rendering)."
+                ],
+                color: "amber"
+            },
+            {
+                title: "Kelompok Operasional & Penggunaan",
+                desc: "Memantau alur keluar-masuk alat serta alokasi penggunaan studio oleh siswa dan guru.",
+                items: [
+                    "Standard Operating Procedure (SOP): Prosedur nyala/mati workstation, penggunaan lighting.",
+                    "Form Peminjaman & Pengembalian: Kontrol alat praktikum di luar ruangan.",
+                    "Logbook Harian: Catatan penggunaan studio harian."
+                ],
+                color: "blue"
+            },
+            {
+                title: "Kelompok Perawatan & Pemeliharaan",
+                desc: "Memastikan alat senantiasa dalam kondisi performa puncak melalui jadwal rutin.",
+                items: [
+                    "Preventive Maintenance Checklist: Pembersihan lensa, cek drybox, update software.",
+                    "Laporan Kerusakan: Kronologi, penyebab, dan estimasi biaya perbaikan.",
+                    "Lembar Keselamatan Kerja (K3): Jalur evakuasi dan pencegahan bahaya listrik."
+                ],
+                color: "green"
+            },
+            {
+                title: "Kelompok Berita Acara & Legal",
+                desc: "Dokumen bukti fisik untuk kejadian luar biasa atau serah terima tanggung jawab.",
+                items: [
+                    "Berita Acara Kerusakan: Bukti pertanggungjawaban jika terjadi kelalaian berat.",
+                    "Berita Acara Serah Terima: Dokumen pindah tangan aset antar personil."
+                ],
+                color: "purple"
+            },
+            {
+                title: "Kelompok Panduan & Manual",
+                desc: "Referensi cepat bagi pengguna agar alat tidak cepat rusak akibat salah prosedur.",
+                items: [
+                    "Manual Book PDF: Arsip manual asli dari pabrikan.",
+                    "Troubleshooting Chart: Panduan solusi cepat masalah umum (misal: kamera mati, printer macet)."
+                ],
+                color: "slate"
+            }
+        ];
+
+        const templates = {
+            pinjam: `=================================================================================
+                     FORM PEMINJAMAN ALAT PRACTICUM DKV
+                           SMK NEGERI / SWASTA [...]
+=================================================================================
+
+A. INFORMASI PEMINJAM
+   Nama Peminjam   : ______________________________  NIS / NIP : _______________
+   Kelas / Tingkat : ___________ (DKV 1 / 2 / 3)    No. HP/WA : _______________
+
+B. DAFTAR PERALATAN
+┌───┬───────────────────────────┬──────────────┬───────────────┬────────────────┐
+│No │ Nama Alat & Spesifikasi   │ Kode / SN    │ Jml / Unit    │ Kondisi Awal   │
+├───┼───────────────────────────┼──────────────┼───────────────┼────────────────┤
+│ 1 │ Kamera Mirrorless Sony    │ CAM-DKV-003  │ 1 Unit        │ [ ] Baik       │
+│ 2 │ Lensa 35mm f/1.8          │ LNS-DKV-012  │ 1 Unit        │ [ ] Baik       │
+└───┴───────────────────────────┴──────────────┴───────────────┴────────────────┘
+
+C. PERSETUJUAN & SERAH TERIMA
+   Peminjam,                    Teknisi Lab/Studio,          Guru Pengampu,
+
+   (___________________)        (___________________)        (___________________)`,
+            
+            rusak: `=================================================================================
+                     LAPORAN KERUSAKAN & PERBAIKAN ALAT
+                         LABORATORIUM & STUDIO DKV
+=================================================================================
+1. IDENTITAS ALAT
+   Nama Perangkat  : ___________________________________________________________
+   Kode Aset       : _______________________  Serial Number : __________________
+
+2. RINCIAN KERUSAKAN
+   Deskripsi Kerusakan / Gejala:
+   _____________________________________________________________________________
+
+3. ANALISIS TEKNISI LAB
+   Kategori Kerusakan: [ ] Ringan  [ ] Sedang  [ ] Berat
+   Estimasi Biaya: Rp _______________________`,
+            
+            maintenance: `=================================================================================
+               CHECKLIST MAINTENANCE PREVENTIF STUDIO & LAB DKV
+=================================================================================
+┌───┬───────────────────────────────┬────────────────────────────┬────┬────┬──────────┐
+│No │ Area / Jenis Alat             │ Item Pemeriksaan           │ B  │ R  │ Catatan  │
+├───┼───────────────────────────────┼────────────────────────────┼────┼────┼──────────┤
+│ 1 │ Kamera & Lensa                │ Kebersihan Optik/Lensa     │    │    │          │
+│ 2 │ Lighting Studio               │ Fungsi Trigger Wireless    │    │    │          │
+│ 3 │ Workstation Computer          │ Kebersihan Dust Filter     │    │    │          │
+└───┴───────────────────────────────┴────────────────────────────┴────┴────┴──────────┘`
+        };
+
+        // Navigation Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('nav-active');
+        }
+
+        // Category Detail Logic
+        function showCategory(index) {
+            const cat = categories[index];
+            const detailArea = document.getElementById('category-detail');
+            
+            // Highlight Button
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
+                btn.classList.add('bg-white', 'text-slate-600');
+            });
+            document.getElementById('cat-btn-' + index).classList.remove('bg-white', 'text-slate-600');
+            document.getElementById('cat-btn-' + index).classList.add('bg-amber-500', 'text-white', 'border-amber-500');
+
+            detailArea.innerHTML = `
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-${cat.color}-100 flex items-center justify-center text-${cat.color}-600">
+                        <span class="text-2xl">📋</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800">${cat.title}</h3>
+                </div>
+                <p class="text-slate-600 mb-6 border-b pb-4">${cat.desc}</p>
+                <div class="space-y-4">
+                    <h4 class="font-bold text-slate-700">Elemen Wajib / Jenis Dokumen:</h4>
+                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${cat.items.map(item => `
+                            <li class="flex gap-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-sm">
+                                <span class="text-amber-500 font-bold">✓</span> ${item}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Template Viewer Logic
+        function loadTemplate(key) {
+            const viewer = document.getElementById('template-content');
+            viewer.innerText = templates[key];
+        }
+
+        // Chart Initialization
+        function initCharts() {
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Inventaris', 'Operasional', 'Pemeliharaan', 'Legal', 'Panduan'],
+                    datasets: [{
+                        label: 'Skor Pentingnya Dokumen (1-10)',
+                        data: [10, 9, 10, 7, 6],
+                        backgroundColor: [
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(34, 197, 94, 0.7)',
+                            'rgba(168, 85, 247, 0.7)',
+                            'rgba(71, 85, 105, 0.7)'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            ticks: { 
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    let label = this.getLabelForValue(value);
+                                    return label.length > 12 ? label.substring(0, 10) + '..' : label;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Initial Load
+        window.onload = () => {
+            initCharts();
+            showCategory(0);
+        };
+    </script>
+</body>
+</html>
